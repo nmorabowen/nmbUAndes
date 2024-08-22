@@ -1,0 +1,5 @@
+Enter the name of the new folder:
+cp: cannot stat '/mnt/deadmanschest/nmorabowen/run.sh': No such file or directory
+sed: can't read /mnt/deadmanschest/nmorabowen//run.sh: No such file or directory
+sbatch: error: Unable to open file run.sh
+LARGA VIDA AL LADRUÑO!
