@@ -14,17 +14,32 @@ BASE_FOLDER="$SOURCE_FOLDER/$NEW_FOLDER_NAME"
 NEW_FOLDER="$DESTINATION_FOLDER/$NEW_FOLDER_NAME"
 
 # Check if the folder already exists
-if [ -d "$NEW_FOLDER" ]; then
-  echo "Folder $NEW_FOLDER_NAME already exists. Do you want to remove it? (y/n)"
-  read -r REMOVE_CONFIRMATION
-  if [ "$REMOVE_CONFIRMATION" = "y" ]; then
-    rm -rf "$NEW_FOLDER"
-    echo "Existing folder removed."
-  else
-    echo "Exiting script without making changes."
-    exit 0
-  fi
-fi
+while [ -d "$NEW_FOLDER" ]; do
+  echo "Folder $NEW_FOLDER_NAME already exists. What would you like to do?"
+  echo "1) Remove the existing folder"
+  echo "2) Enter a new name"
+  echo "3) Stop the script"
+  read -r OPTION
+  
+  case $OPTION in
+    1)
+      rm -rf "$NEW_FOLDER"
+      echo "Existing folder removed."
+      ;;
+    2)
+      echo "Enter the new name for the folder:"
+      read -r NEW_FOLDER_NAME
+      NEW_FOLDER="$DESTINATION_FOLDER/$NEW_FOLDER_NAME"
+      ;;
+    3)
+      echo "Exiting script without making changes."
+      exit 0
+      ;;
+    *)
+      echo "Invalid option. Please select 1, 2, or 3."
+      ;;
+  esac
+done
 
 # Step 1: Copy the entire folder from shared to the user's directory
 if cp -r "$BASE_FOLDER" "$NEW_FOLDER"; then
@@ -59,4 +74,7 @@ else
   exit 1
 fi
 
+echo "/n"
+echo "------------------------------"
 echo "LARGA VIDA AL LADRUÑO!"
+echo "------------------------------"
