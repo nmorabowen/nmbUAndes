@@ -3,7 +3,7 @@
 # Define paths
 SOURCE_FOLDER="/mnt/deadmanschest/shared/nmorabowen"
 DESTINATION_FOLDER="/mnt/deadmanschest/nmorabowen"
-SCRIPT_FILE="$DESTINATION_FOLDER/run.sh"
+SCRIPT_FILE="mnt/deadmanschest/nmorabowen/nmbUAndes/run.sh"
 
 # Prompt for the new folder name
 echo "Enter the name of the new folder:"
