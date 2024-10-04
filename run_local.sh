@@ -30,8 +30,7 @@ while [ -d "$NEW_FOLDER" ]; do
       echo "Existing folder removed."
       ;;
     2)
-      echo "Enter the new name for the folder:"
-      read -r NEW_FOLDER_NAME
+      NEW_FOLDER_NAME="${NEW_FOLDER_NAME}_res"
       NEW_FOLDER="$DESTINATION_FOLDER/$NEW_FOLDER_NAME"
       ;;
     3)
