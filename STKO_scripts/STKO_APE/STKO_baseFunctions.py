@@ -1,4 +1,4 @@
-from PyMpc import *
+from PyMpc import App, IO
 
 def clearCharts():
     # Function to delete all charts and chart data
@@ -20,6 +20,11 @@ def clearCharts():
     # Log a custom message
     IO.write_clog('LARGA VIDA AL LADRUÑO!!!')
 
-# The main block
-if __name__ == "__main__":
-    clearCharts()
+def write_in_terminal(string:str):
+    IO.write_cout(string+'\n')
+
+def write_in_terminal_blue(string:str):
+    IO.write_clog(string+'\n')
+    
+def write_in_terminal_red(string:str):
+    IO.write_cerr(string+'\n')
