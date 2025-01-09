@@ -12,7 +12,7 @@ print(ss_results)
 print(ss_results['nodes'])
 
 print('---------------------------------------')
-selection_set_id=1
+selection_set_id=2
 ss_results=file.extract_mesh_elements_selectionSet(selection_set_id=selection_set_id)
 
 print('Nodes')
