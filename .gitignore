@@ -5,3 +5,4 @@ STKO_scripts/STKO_APE/__pycache__/modelAPE.cpython-310.pyc
 STKO_scripts/STKO_APE/__pycache__/selectionSet.cpython-310.pyc
 STKO_scripts/STKO_APE/__pycache__/STKO_baseFunctions.cpython-310.pyc
 STKO_scripts/STKO_APE/__pycache__/STKOMeshExtractor.cpython-310.pyc
+*.pyc
