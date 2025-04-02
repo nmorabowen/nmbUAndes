@@ -76,7 +76,7 @@ fi
 
 # Run command
 cd "$NEW_FOLDER" || { echo "Failed to change directory to $NEW_FOLDER. Exiting script."; exit 1; }
-if sbatch run.sh; then
+if sbatch --nodes=1 --ntasks-per-node=8 run.sh; then
   echo "Job submitted successfully."
   echo
 else

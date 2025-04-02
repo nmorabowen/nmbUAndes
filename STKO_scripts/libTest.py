@@ -5,14 +5,14 @@ from STKO_APE import write_in_terminal_blue, write_in_terminal_red, write_in_ter
 file=modelAPE()
 
 print('---------------------------------------')
-selection_set_id=2
+selection_set_id=38
 ss_results=file.extract_mesh_data_selectionSet(selection_set_id=selection_set_id)
 
 print(ss_results)
 print(ss_results['nodes'])
 
 print('---------------------------------------')
-selection_set_id=2
+selection_set_id=38
 ss_results=file.extract_mesh_elements_selectionSet(selection_set_id=selection_set_id)
 
 print('Nodes')
