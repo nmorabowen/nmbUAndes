@@ -12,4 +12,4 @@ SECONDS=0
 mpirun /mnt/nfshare/bin/openseesmp-16102024-explicitbathe main.tcl
 echo "Elapsed: $SECONDS seconds."
 echo "Code finished succesfully."
-echo "LARGA VIDA AL LARUÑO!!!"
+echo "LARGA VIDA AL LADRUÑO!!!"
