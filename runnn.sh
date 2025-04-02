@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define paths
-SOURCE_FOLDER="/mnt/deadmanschest/shared/nmorabowen"
+SOURCE_FOLDER="/mnt/deadmanschest/nmorabowen"
 DESTINATION_FOLDER="/mnt/deadmanschest/nmorabowen"
 SCRIPT_FILE="/mnt/deadmanschest/nmorabowen/nmbUAndes/run.sh"
 
