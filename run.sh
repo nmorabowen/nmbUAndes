@@ -2,7 +2,7 @@
 
 # Default values
 DEFAULT_NODES=1
-DEFAULT_TASKS_PER_NODE=16
+DEFAULT_TASKS_PER_NODE=8
 JOB_NAME="nmbTEMP"
 MODE="slurm"  # Default to SLURM mode
 
