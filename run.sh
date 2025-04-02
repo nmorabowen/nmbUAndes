@@ -49,7 +49,7 @@ SECONDS=0
 
 if [[ "$MODE" == "slurm" ]]; then
   # SLURM execution
-  mpirun /mnt/nfshare/bin/openseesmp-16102024 main.tcl
+  mpirun /mnt/nfshare/bin/opensees-10012025 main.tcl
 else
   # Local execution
   for ((node=1; node<=NODES; node++)); do
@@ -59,7 +59,7 @@ else
     done
   done
   # Run OpenSees locally
-  /mnt/nfshare/bin/openseesmp-16102024 main.tcl
+  /mnt/nfshare/bin/opensees-10012025 main.tcl
 fi
 
 # Log completion
