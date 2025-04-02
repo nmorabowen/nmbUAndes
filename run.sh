@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --node=node[1-17]
 #SBATCH --job-name=test   # Job name
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=8
