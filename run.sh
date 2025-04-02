@@ -1,4 +1,3 @@
-
 #!/bin/bash
 #SBATCH --job-name=test   # Job name
 #SBATCH --nodes=1
