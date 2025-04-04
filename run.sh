@@ -1,9 +1,8 @@
 #!/bin/bash
 #SBATCH --exclude=node18
-#SBATCH --job-name=nmbTEMP   # Job name
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=8
-#SBATCH --output=log.log   # Standard output and error log
+#SBATCH --job-name=nmbTEMP
+#SBATCH --ntasks=8                    # Valor por defecto si no se pasa desde afuera
+#SBATCH --output=log.log
 
 pwd; hostname; date
 
@@ -14,6 +13,5 @@ SECONDS=0
 mpirun /mnt/nfshare/bin/openseesmp-16102024-explicitbathe main.tcl
 
 echo "Elapsed: $SECONDS seconds."
-echo "Code finished succesfully."
+echo "Code finished successfully."
 echo "LARGA VIDA AL LADRUÑO!!!"
-

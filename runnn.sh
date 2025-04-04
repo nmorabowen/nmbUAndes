@@ -1,91 +1,46 @@
 #!/bin/bash
 
-# Define paths
-SOURCE_FOLDER="/mnt/deadmanschest/nmorabowen"
-DESTINATION_FOLDER="/mnt/deadmanschest/nmorabowen"
-SCRIPT_FILE="/mnt/deadmanschest/nmorabowen/nmbUAndes/run.sh"
+# === LOGGING ===
+LOG_DIR="/mnt/deadmanschest/nmorabowen/logs"
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/run_one.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+echo "==== SINGLE ANALYSIS at $(date) ===="
 
-# Prompt for the new folder name
-echo "Enter the name of the new folder:"
-read NEW_FOLDER_NAME
+# === USER INPUT ===
+echo "Enter the full path to the analysis folder:"
+read -r ANALYSIS_FOLDER
 
-# Define the new folder path
-BASE_FOLDER="$SOURCE_FOLDER/$NEW_FOLDER_NAME"
-NEW_FOLDER="$DESTINATION_FOLDER/$NEW_FOLDER_NAME"
+# Check if folder exists
+if [ ! -d "$ANALYSIS_FOLDER" ]; then
+  echo "❌ Folder '$ANALYSIS_FOLDER' does not exist."
+  exit 1
+fi
 
-# Check if the folder already exists
-while [ -d "$NEW_FOLDER" ]; do
-  echo "Folder $NEW_FOLDER_NAME already exists. What would you like to do?"
-  echo "1) Remove the existing folder"
-  echo "2) Enter a new name"
-  echo "3) Stop the script"
-  echo
+# === SETTINGS ===
+SCRIPT_SOURCE="/mnt/deadmanschest/nmorabowen/nmbUAndes/run.sh"
+TARGET_SCRIPT="$ANALYSIS_FOLDER/run.sh"
 
-  read -r OPTION
-  echo
+# === DETECT PARTITIONS ===
+NUM_PARTS=$(find "$ANALYSIS_FOLDER" -name "*.part-*.mpco.cdata" | wc -l)
+NUM_PARTS=${NUM_PARTS:-8}  # fallback a 8 si no hay archivos encontrados
 
-  case $OPTION in
-    1)
-      rm -rf "$NEW_FOLDER"
-      echo "Existing folder removed."
-      ;;
-    2)
-      echo "Enter the new name for the folder:"
-      read -r NEW_FOLDER_NAME
-      NEW_FOLDER="$DESTINATION_FOLDER/$NEW_FOLDER_NAME"
-      ;;
-    3)
-      echo "Exiting script without making changes."
-      exit 0
-      ;;
-    *)
-      echo "Invalid option. Please select 1, 2, or 3."
-      ;;
-  esac
-done
+# === GENERATE JOB NAME ===
+FOLDER_NAME=$(basename "$ANALYSIS_FOLDER")
+JOB_NAME="single_${FOLDER_NAME}"
+
+# === PREPARE run.sh ===
+[ -f "$TARGET_SCRIPT" ] && rm "$TARGET_SCRIPT"
+cp "$SCRIPT_SOURCE" "$TARGET_SCRIPT"
+sed -i "s/nmbTEMP/${JOB_NAME}/g" "$TARGET_SCRIPT"
+
+# === SUBMIT ===
+echo "📦 Submitting '$FOLDER_NAME' with $NUM_PARTS task(s)..."
+(
+  cd "$ANALYSIS_FOLDER" && \
+  sbatch --ntasks="$NUM_PARTS" run.sh && \
+  echo "✅ Job submitted successfully."
+) || echo "❌ Failed to submit job."
 
 echo
-
-# Step 1: Copy the entire folder from shared to the user's directory
-if cp -r "$BASE_FOLDER" "$NEW_FOLDER"; then
-  echo "Folder copied successfully."
-else
-  echo "Failed to copy folder. Exiting script."
-  echo
-  exit 1
-fi
-
-# Step 2: Copy the script file to the new folder
-if cp "$SCRIPT_FILE" "$NEW_FOLDER"; then
-  echo "Script file copied successfully."
-else
-  echo "Failed to copy script file. Exiting script."
-  echo
-  exit 1
-fi
-
-# Step 3: Replace 'nmbTEMP' with the new folder name in the run.sh file
-if sed -i "s/nmbTEMP/$NEW_FOLDER_NAME/g" "$NEW_FOLDER/run.sh"; then
-  echo "Job name updated successfully in run.sh."
-  echo
-else
-  echo "Failed to update job name in run.sh. Exiting script."
-  echo
-  exit 1
-fi
-
-# Run command
-cd "$NEW_FOLDER" || { echo "Failed to change directory to $NEW_FOLDER. Exiting script."; exit 1; }
-if sbatch --nodes=1 --ntasks-per-node=8 run.sh; then
-  echo "Job submitted successfully."
-  echo
-else
-  echo "Failed to submit job. Exiting script."
-  echo
-  exit 1
-fi
-
-echo 
-echo "------------------------------"
-echo "LARGA VIDA AL LADRUÑO!"
-echo "------------------------------"
+echo "LARGA VIDA AL LADRUÑO! 🏴‍☠️"
