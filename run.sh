@@ -10,7 +10,7 @@ export OMP_NUM_THREADS=1
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt/nfshare/lib
 
 SECONDS=0
-mpirun /mnt/nfshare/bin/openseesmp-16102024-explicitbathe main.tcl
+mpirun /mnt/nfshare/bin/openseesmp-26062025 main.tcl
 
 echo "Elapsed: $SECONDS seconds."
 echo "Code finished successfully."
