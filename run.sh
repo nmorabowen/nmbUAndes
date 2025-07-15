@@ -9,21 +9,33 @@ pwd; hostname; date
 export OMP_NUM_THREADS=1
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt/nfshare/lib
 
-# Inicia monitoreo del uso de memoria total del nodo y de cada proceso OpenSeesMP
+#!/bin/bash
+LOGFILE="memtrack_node.txt"
+
+# Get the mpirun PID
+MPIRUN_PID=$(pgrep -f "mpirun.*openseesmp")
+
+# Start loop
 ( while true; do
     TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
-    echo "$TIMESTAMP" >> memtrack_node.txt
-    free -h >> memtrack_node.txt
-    echo "-----------" >> memtrack_node.txt
+    echo "$TIMESTAMP" >> "$LOGFILE"
+    free -h >> "$LOGFILE"
+    echo "-----------" >> "$LOGFILE"
 
-    # Monitorear todos los procesos relacionados con OpenSeesMP
-    pgrep -af openseesmp | while read PID CMD; do
-        echo "PID: $PID" >> memtrack_node.txt
-        ps -p $PID -o pid,%mem,rss,vsz,cmd --no-headers >> memtrack_node.txt
-    done
-    echo "======================" >> memtrack_node.txt
+    if [[ -n "$MPIRUN_PID" ]]; then
+        # Get all child PIDs of mpirun (including indirect children)
+        PIDS=$(pgrep -P $MPIRUN_PID)
+        for PID in $PIDS; do
+            CMD=$(ps -p $PID -o cmd=)
+            echo "PID: $PID" >> "$LOGFILE"
+            ps -p $PID -o pid,%mem,rss,vsz,cmd --no-headers >> "$LOGFILE"
+        done
+    fi
+
+    echo "======================" >> "$LOGFILE"
     sleep 30
 done ) &
+
 
 # Guarda el PID del proceso de monitoreo
 MONITOR_PID=$!
