@@ -30,7 +30,7 @@ MONITOR_PID=$!
 
 # Ejecuta el análisis con OpenSeesMP
 SECONDS=0
-mpirun /mnt/nfshare/bin/openseesmp-26062025 main.tcl
+mpirun /mnt/nfshare/bin/opensees-14072025 main.tcl
 # Al terminar, mata el monitoreo
 kill $MONITOR_PID
 
