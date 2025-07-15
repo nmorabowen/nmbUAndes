@@ -9,22 +9,29 @@ pwd; hostname; date
 export OMP_NUM_THREADS=1
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt/nfshare/lib
 
-#!/bin/bash
 LOGFILE="memtrack_node.txt"
 
-# Get the mpirun PID
-MPIRUN_PID=$(pgrep -f "mpirun.*openseesmp")
+# Ensure file starts clean
+echo "Memory tracking started at $(date)" > "$LOGFILE"
 
-# Start loop
-( while true; do
+# Start memory logging loop in background
+(
+while true; do
     TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
     echo "$TIMESTAMP" >> "$LOGFILE"
-    free -h >> "$LOGFILE"
+
+    # Capture total memory used (in GiB or MiB)
+    USED=$(free -h | awk '/^Mem:/ {print $3}')
+    echo "Mem: $USED" >> "$LOGFILE"
+
     echo "-----------" >> "$LOGFILE"
 
+    # Get the current mpirun PID (may not be started yet)
+    MPIRUN_PID=$(pgrep -f "mpirun.*openseesmp")
+
     if [[ -n "$MPIRUN_PID" ]]; then
-        # Get all child PIDs of mpirun (including indirect children)
-        PIDS=$(pgrep -P $MPIRUN_PID)
+        # Get child PIDs of mpirun (each MPI rank)
+        PIDS=$(ps --ppid $MPIRUN_PID -o pid=)
         for PID in $PIDS; do
             CMD=$(ps -p $PID -o cmd=)
             echo "PID: $PID" >> "$LOGFILE"
@@ -34,7 +41,8 @@ MPIRUN_PID=$(pgrep -f "mpirun.*openseesmp")
 
     echo "======================" >> "$LOGFILE"
     sleep 30
-done ) &
+done
+) &
 
 
 # Guarda el PID del proceso de monitoreo
