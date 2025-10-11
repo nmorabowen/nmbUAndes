@@ -22,7 +22,7 @@ SECONDS=0
 EXIT_CODE=0
 
 # Use MPI build under Slurm
-if ! srun --mpi=pmix_v3 /mnt/nfshare/bin/openseesmp-16102024-explicitbathe main.tcl; then
+if ! srun --mpi=pmix_v3 /mnt/nfshare/bin/opensees-14072025 main.tcl; then
   EXIT_CODE=$?
 fi
 

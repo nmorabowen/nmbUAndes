@@ -6,6 +6,9 @@
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
 #SBATCH --exclude=node17,node18
+#SBATCH --hint=nomultithread
+# Optional: for 32 ranks on 16-core nodes, force 2 nodes:
+# #SBATCH --ntasks-per-node=16
 
 set -euo pipefail
 
@@ -23,7 +26,6 @@ LOGFILE="${JOBLOG//%j/${SLURM_JOB_ID:-nojob}}"
 } > "$LOGFILE"
 
 # ─────────────────────────────────────────────────────────────
-# Cleanup monitor on exit
 cleanup() {
   echo "[$(date)] Killing monitor PID ${MONITOR_PID:-NA}" >> "$LOGFILE" || true
   [[ -n "${MONITOR_PID:-}" ]] && kill "$MONITOR_PID" 2>/dev/null || true
@@ -31,22 +33,18 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 # ─────────────────────────────────────────────────────────────
-# Start memory tracking in background (SLURM-aware)
+# Start memory tracking in background
 (
-  # Poll both node memory and per-task memory via sstat (cross-node)
   while :; do
     ts="$(date '+%Y-%m-%d %H:%M:%S')"
     echo "$ts" >> "$LOGFILE"
 
-    # Node total memory use (this node)
     if command -v free >/dev/null 2>&1; then
       used_mb=$(free -m | awk '/^Mem:/ {print $3}')
       echo "Node Mem Used: ${used_mb} MB" >> "$LOGFILE"
     fi
 
-    # Per-task RSS via sstat (aggregates across nodes)
     if [[ -n "${SLURM_JOB_ID:-}" ]] && command -v sstat >/dev/null 2>&1; then
-      # MaxRSS and AveRSS in KB; format them and append
       sstat -j "$SLURM_JOB_ID" --format=JobID,MaxRSS,AveRSS,MaxVMSize,AveVMSize -P \
         | awk -F'|' 'NR==1 || $2!="" {print "sstat:", $0}' >> "$LOGFILE" || true
     fi
@@ -57,13 +55,22 @@ trap cleanup EXIT INT TERM
 ) & MONITOR_PID=$!
 
 # ─────────────────────────────────────────────────────────────
-# Launch OpenSeesMP analysis (prefer srun under SLURM)
+# Launch OpenSees (your other binary; MPI-enabled)
 SECONDS=0
+EXIT_CODE=0
 
-# If your OpenSees uses MPI ranks = ntasks, srun will fan out
-srun --mpi=pmix_v3 /mnt/nfshare/bin/opensees-14072025 main.tcl
+# Make binding explicit (good for logs)
+# If your cluster prefers a different MPI type, adjust --mpi=...
+if ! srun --cpu-bind=cores --mpi=pmix_v3 /mnt/nfshare/bin/opensees-14072025 main.tcl; then
+  EXIT_CODE=$?
+fi
 
-# ─────────────────────────────────────────────────────────────
 echo "Elapsed: $SECONDS seconds."
-echo "Code finished successfully."
+if [[ $EXIT_CODE -eq 0 ]]; then
+  echo "Code finished successfully."
+else
+  echo "Code exited with status $EXIT_CODE"
+fi
 echo "LARGA VIDA AL LADRUÑO!!!"
+
+exit "$EXIT_CODE"
