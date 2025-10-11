@@ -2,10 +2,12 @@
 #SBATCH --exclude=node17,node18
 #SBATCH --job-name=nmbTEMP
 #SBATCH --ntasks=8
+#SBATCH --ntasks-per-node=16           # optional: ensures 2 nodes for 32 ranks; harmless for 1 task
 #SBATCH --cpus-per-task=1
 #SBATCH --time=48:00:00
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
+#SBATCH --hint=nomultithread
 
 set -euo pipefail
 
@@ -19,8 +21,8 @@ export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}:/mnt/nfshare/lib"
 SECONDS=0
 EXIT_CODE=0
 
-# Prefer srun under SLURM; if you must use mpirun, replace the next line with your mpirun line.
-if ! srun --mpi=pmix_v3 /mnt/nfshare/bin/opensees-14072025 main.tcl; then
+# Use MPI build under Slurm
+if ! srun --mpi=pmix_v3 /mnt/nfshare/bin/openseesmp-16102024-explicitbathe main.tcl; then
   EXIT_CODE=$?
 fi
 
@@ -61,13 +63,11 @@ STATUS_FILE="status.txt"
 # --- Safety rails for cleanup ---
 safe_rm_tree() {
   local target="$1"
-
   # Never delete if path is empty, root, home, or equals destination
   if [[ -z "$target" || "$target" == "/" || "$target" == "$DEST_BASE" || "$target" == "$DEST_PATH" ]]; then
     echo "⚠️  Refusing to remove suspicious target: '$target'"
     return 1
   fi
-
   # Only remove contents, keep the folder and status.txt
   find "$target" -mindepth 1 ! -name "status.txt" -exec rm -rf {} + 2>/dev/null
 }
@@ -80,35 +80,39 @@ if [[ "$EXIT_CODE" -eq 0 ]]; then
   echo "📁 Copying to destination: $DEST_PATH"
   mkdir -p "$DEST_PATH"
 
-  # Copy everything except status.txt first
-  # -a: archive; -HAX preserve hardlinks/ACLs/xattrs if supported; --info=stats2: nicer stats
-  # Use a simple 1-time retry pattern for transient issues.
-  RSYNC_COMMON_OPTS=(-a --delete-excluded --exclude="status.txt" --info=stats2)
+  # Copy everything except status.txt first (no delete, safer)
+  RSYNC_COMMON_OPTS=(-a --exclude="status.txt" --info=stats2)
+
   if ! rsync "${RSYNC_COMMON_OPTS[@]}" ./ "$DEST_PATH/"; then
     echo "⚠️  First rsync attempt failed, retrying once..."
     sleep 3
-    rsync "${RSYNC_COMMON_OPTS[@]}" ./ "$DEST_PATH/"
+    rsync "${RSYNC_COMMON_OPTS[@]}" ./ "$DEST_PATH/" || {
+      echo "❌ rsync failed twice; not deleting source."
+      exit 1
+    }
   fi
 
-  # Also copy the final status.txt at the end so it reflects final metadata
+  # Copy the final status.txt at the end so it reflects final metadata
   cp -f "$STATUS_FILE" "$DEST_PATH/"
 
-  # Quick integrity check: ensure destination has main artifacts (e.g., main.tcl or results)
-  if [[ -f "$DEST_PATH/main.tcl" || -d "$DEST_PATH" ]]; then
-    echo "✅ Copy completed. Cleaning original folder (except $STATUS_FILE)..."
-
-    # Extra safety: do not clean if DEST_PATH == ORIG_PATH
-    if [[ "$DEST_PATH" == "$ORIG_PATH" ]]; then
-      echo "⚠️  Destination equals source—refusing to clean."
-      exit 1
-    fi
-
-    safe_rm_tree "$ORIG_PATH" || { echo "⚠️  Cleanup safeguards triggered; nothing deleted."; exit 1; }
-    echo "🧼 Cleanup complete."
-  else
-    echo "⚠️  Destination seems incomplete; not deleting source."
+  # Quick integrity: require at least 1 non-status file copied and not fewer than source
+  SRC_COUNT=$(find . -mindepth 1 ! -name "status.txt" | wc -l)
+  DST_COUNT=$(find "$DEST_PATH" -mindepth 1 ! -name "status.txt" | wc -l)
+  if [[ "$DST_COUNT" -lt 1 || "$DST_COUNT" -lt "$SRC_COUNT" ]]; then
+    echo "⚠️  Destination seems incomplete (src=$SRC_COUNT, dst=$DST_COUNT); not deleting source."
     exit 1
   fi
+
+  echo "✅ Copy completed. Cleaning original folder (except $STATUS_FILE)..."
+
+  # Extra safety: do not clean if DEST_PATH == ORIG_PATH
+  if [[ "$DEST_PATH" == "$ORIG_PATH" ]]; then
+    echo "⚠️  Destination equals source—refusing to clean."
+    exit 1
+  fi
+
+  safe_rm_tree "$ORIG_PATH" || { echo "⚠️  Cleanup safeguards triggered; nothing deleted."; exit 1; }
+  echo "🧼 Cleanup complete."
 else
   echo "❌ Simulation failed (exit $EXIT_CODE). Skipping copy and cleanup."
   exit "$EXIT_CODE"
