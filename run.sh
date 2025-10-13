@@ -2,7 +2,6 @@
 #SBATCH --job-name=nmbTEMP
 #SBATCH --ntasks=8
 #SBATCH --cpus-per-task=1
-#SBATCH --time=48:00:00
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
 #SBATCH --exclude=node17,node18

@@ -4,7 +4,6 @@
 #SBATCH --ntasks=8
 #SBATCH --ntasks-per-node=16           # optional: ensures 2 nodes for 32 ranks; harmless for 1 task
 #SBATCH --cpus-per-task=1
-#SBATCH --time=48:00:00
 #SBATCH --output=%x-%j.out
 #SBATCH --error=%x-%j.err
 #SBATCH --hint=nomultithread
